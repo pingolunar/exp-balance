@@ -1,0 +1,9 @@
+name: ExpBalance
+version: '${project.version}'
+main: mine.plugins.lunar.expbalance.Main
+api-version: '1.20'
+permissions:
+  xpb.*:
+    default: op
+    children:
+      xpb.config: true
