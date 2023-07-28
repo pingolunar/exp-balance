@@ -5,6 +5,7 @@ import mine.plugins.lunar.expbalance.block_info.tags.NaturalTag;
 import mine.plugins.lunar.expbalance.config.ConfigManager;
 import mine.plugins.lunar.expbalance.listener.*;
 import mine.plugins.lunar.expbalance.player.XpPlayerData;
+import mine.plugins.lunar.expbalance.recipe.BundleCustomRecipe;
 import mine.plugins.lunar.plugin_framework.data.Debugger;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -15,7 +16,7 @@ public final class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        Debugger.isDebugActive = false;
+        Debugger.isDebugActive = true;
         Debugger.isFileDebugActive = false;
 
         BlockInfo.createConfig(this);
@@ -31,6 +32,8 @@ public final class Main extends JavaPlugin {
         pluginManager.registerEvents(new FortuneBlockApplier(), this);
 
         configManager = new ConfigManager(this);
+
+        BundleCustomRecipe.enable(this);
     }
 
     @Override

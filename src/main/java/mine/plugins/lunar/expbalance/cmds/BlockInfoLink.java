@@ -1,6 +1,6 @@
 package mine.plugins.lunar.expbalance.cmds;
 
-import mine.plugins.lunar.expbalance.config.XpConfig;
+import mine.plugins.lunar.expbalance.config.GeneralConfig;
 import mine.plugins.lunar.plugin_framework.cmds.args.Arg;
 import mine.plugins.lunar.plugin_framework.cmds.args.LinkArg;
 import mine.plugins.lunar.plugin_framework.config.ConfigArg;
@@ -11,8 +11,8 @@ import java.util.List;
 
 public class BlockInfoLink extends LinkArg {
 
-    public BlockInfoLink(XpConfig xpConfig) {
-        super("block_info", List.of(new ConfigArg(xpConfig, "xpb.config")));
+    public BlockInfoLink(GeneralConfig generalConfig) {
+        super("block_info", List.of(new ConfigArg(generalConfig, "xpb.config")));
     }
 
     @Override

@@ -1,64 +1,84 @@
 package mine.plugins.lunar.expbalance.listener;
 
 import mine.plugins.lunar.expbalance.block_info.BlockInfoTagType;
-import mine.plugins.lunar.expbalance.config.ConfigManager;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDropItemEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerHarvestBlockEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.List;
 
 public class FortuneBlockApplier implements Listener {
 
-    @EventHandler(ignoreCancelled = true)
-    private void giveExpOnBlockBreak(BlockBreakEvent e) {
+    private void modifyLooting(Location dropLocation, Player player, List<ItemStack> drops) {
+        modifyDrops(dropLocation, player, drops, Enchantment.LOOT_BONUS_MOBS);
+    }
 
-        var block = e.getBlock();
-        var drops = block.getDrops();
+    private void modifyFortune(Block block, Player player, List<ItemStack> drops) {
+        if (!areBlockDropsValid(block, player)) return;
+        modifyDrops(block.getLocation(), player, drops, Enchantment.LOOT_BONUS_BLOCKS);
+    }
 
-        var player = e.getPlayer();
-        if (!BlockInfoTagType.NATURAL.getBlockInfoTag().isBlockValid(player, block))
-            return;
+    private boolean areBlockDropsValid(Block block, Player player) {
+        if (!BlockInfoTagType.TOOL.getBlockInfoTag().isBlockValid(player, block))
+            return false;
 
-        if (drops.size() > 1)
-            return;
-//TODO apply to all block, override drops
-        var blockType = block.getType();
-        var onlyDrop = drops.stream().findFirst();
+        return BlockInfoTagType.NATURAL.getBlockInfoTag().isBlockValid(player, block) ||
+                BlockInfoTagType.CROP.getBlockInfoTag().isBlockValid(player, block);
+    }
 
-        if (onlyDrop.isEmpty() || onlyDrop.get().getType() != blockType)
-            return;
+    private void modifyDrops(Location dropLocation, Player player, List<ItemStack> drops, Enchantment modifierEnchantment) {
+
+        var world = dropLocation.getWorld();
+        if (world == null) return;
 
         var mainHandItem = player.getInventory().getItemInMainHand();
-
-        if (!block.isPreferredTool(mainHandItem))
-            return;
-
-        var blockLoc = block.getLocation();
-
-        var blockWorld = blockLoc.getWorld();
-        if (blockWorld == null) return;
-
         var toolEnchants = mainHandItem.getEnchantments();
 
-        var fortuneEnchantLevel = toolEnchants.get(Enchantment.LOOT_BONUS_BLOCKS);
-        if (fortuneEnchantLevel == null) fortuneEnchantLevel = 0;
+        var fortuneEnchantLevel = toolEnchants.get(modifierEnchantment);
+        if (fortuneEnchantLevel == null) return;
 
-        var lootingEnchantLevel = toolEnchants.get(Enchantment.LOOT_BONUS_MOBS);
-        if (lootingEnchantLevel == null) lootingEnchantLevel = 0;
+        for (var drop : drops) {
+            var dropAmount = drop.getAmount(); Bukkit.getLogger().info("drop:"+drop.getType()+" | amount: "+dropAmount);
+            var enhancedDropAmount = dropAmount * fortuneEnchantLevel;
+            world.dropItemNaturally(dropLocation, new ItemStack(drop.getType(), enhancedDropAmount));
+        }
+    }
 
-        var bestLuckEnchantLevel = Math.max(fortuneEnchantLevel, lootingEnchantLevel);
+    @EventHandler(ignoreCancelled = true)
+    private void modifyFortune(BlockDropItemEvent e) {
 
-        var dropRate = ConfigManager.getXpConfig().luckEnchantMultiplier * bestLuckEnchantLevel;
-        var additionalDrops = (int) Math.floor(dropRate / 100D);
+        var block = e.getBlockState().getBlock();
+        var player = e.getPlayer();
 
-        if (additionalDrops != 0)
-            blockWorld.dropItemNaturally(blockLoc, new ItemStack(blockType, additionalDrops));
+        modifyFortune(block, player, e.getItems().stream().map(Item::getItemStack).toList());
+    }
 
-        var lastDropChance = dropRate % 100D;
-        if (ThreadLocalRandom.current().nextDouble() < lastDropChance)
-            blockWorld.dropItemNaturally(blockLoc, new ItemStack(blockType, 1));
+    @EventHandler(ignoreCancelled = true)
+    private void modifyFortune(PlayerHarvestBlockEvent e) {
+
+        var block = e.getHarvestedBlock();
+        var player = e.getPlayer();
+
+        modifyFortune(block, player, e.getItemsHarvested());
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    private void modifyLooting(EntityDeathEvent e) {
+
+        var player = e.getEntity().getKiller();
+        if (player == null) return;
+
+        var dropLocation = e.getEntity().getLocation();
+
+        modifyLooting(dropLocation, player, e.getDrops());
     }
 }

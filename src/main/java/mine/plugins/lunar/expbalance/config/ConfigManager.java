@@ -12,23 +12,23 @@ import java.util.List;
 
 public class ConfigManager {
 
-    private static final DataInfo<XpConfig> xpDataInfo =
-            new DataInfo<>(Paths.get("config"), "settings", XpConfig.class);
+    private static final DataInfo<GeneralConfig> xpDataInfo =
+            new DataInfo<>(Paths.get("config"), "settings", GeneralConfig.class);
 
     private final JavaPlugin plugin;
-    @Getter private static XpConfig xpConfig;
+    @Getter private static GeneralConfig generalConfig;
 
     public ConfigManager(JavaPlugin plugin) {
         this.plugin = plugin;
 
         var dataHandler = new DataHandler(plugin);
-        xpConfig = dataHandler.load(xpDataInfo, new XpConfig());
-        new BaseCmd(new BlockInfoLink(xpConfig), List.of("bi"));
+        generalConfig = dataHandler.load(xpDataInfo, new GeneralConfig());
+        new BaseCmd(new BlockInfoLink(generalConfig), List.of("bi"));
     }
 
     public void save() {
         var dataHandler = new DataHandler(plugin);
-        dataHandler.save(xpDataInfo, xpConfig);
+        dataHandler.save(xpDataInfo, generalConfig);
 
     }
 }

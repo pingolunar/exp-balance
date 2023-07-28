@@ -21,4 +21,6 @@ public class MobSpawnModifier implements Listener {
 
         e.setCancelled(true);
     }
+
+    //TODO: mobs get stronger equipment & attributes the deeper they spawn, also drop more xp
 }
